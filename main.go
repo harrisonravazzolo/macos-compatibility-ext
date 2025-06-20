@@ -136,7 +136,7 @@ func (m *MacOSCompatibilityTable) getSystemVersion() (string, error) {
 
 // getModelIdentifier gets the hardware model identifier
 func (m *MacOSCompatibilityTable) getModelIdentifier() (string, error) {
-	cmd := exec.Command("/usr/bin/sysctl", "-n", "hw.model")
+	cmd := exec.Command("/usr/sbin/sysctl", "-n", "hw.model")
 	output, err := cmd.Output()
 	if err != nil {
 		return "", err
