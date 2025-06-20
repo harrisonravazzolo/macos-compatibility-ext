@@ -1,0 +1,78 @@
+name: Build macOS Compatibility Extension - arm64, x86_64, universal
+
+on:
+  #push:
+  #  branches: [ main ] disabling for now to test
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Install dependencies
+        run: go mod tidy
+
+      # arm
+      - name: Build ARM64 extension
+        run: |
+          GOOS=darwin GOARCH=arm64 go build -o macos_compatibility_arm64.ext
+
+      # x86
+      - name: Build x86_64 extension
+        run: |
+          GOOS=darwin GOARCH=amd64 go build -o macos_compatibility_x86_64.ext
+
+      # universal binary with lipo
+      - name: Create Universal Binary
+        run: |
+          mkdir -p binaries
+          cp macos_compatibility_arm64.ext ./binaries/
+          cp macos_compatibility_x86_64.ext ./binaries/
+          lipo -create binaries/macos_compatibility_arm64.ext binaries/macos_compatibility_x86_64.ext -output ./binaries/macos_compatibility_universal.ext
+
+      # Save all binaries as artifacts
+      - name: Save extension artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-compatibility-extensions
+          path: binaries/*
+
+      # Create or update "latest" GitHub release with all binaries
+      - name: Update Latest Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: latest
+          name: "macos_compatibility.ext"
+          files: |
+            binaries/macos_compatibility_arm64.ext
+            binaries/macos_compatibility_x86_64.ext
+            binaries/macos_compatibility_universal.ext
+          draft: false
+          prerelease: false
+          body: |
+            This is the latest build of the macOS Compatibility extension for osquery.
+            
+            ## Binaries:
+            - `macos_compatibility_arm64.ext`: For Apple Silicon Macs
+            - `macos_compatibility_x86_64.ext`: For Intel Macs
+            - `macos_compatibility_universal.ext`: Universal binary 
+
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
