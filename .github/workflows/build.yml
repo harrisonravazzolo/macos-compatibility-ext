@@ -1,4 +1,4 @@
-name: Build macOS Compatibility Extension - arm64, x86_64, universal
+name: Build macOS Compatibility Extensions
 
 on:
   #push:
@@ -16,7 +16,7 @@ jobs:
         with:
           go-version: '1.21'
 
-      - name: Cache Go modules
+      - name: Cache Go modules?
         uses: actions/cache@v3
         with:
           path: |
@@ -35,17 +35,17 @@ jobs:
           GOOS=darwin GOARCH=arm64 go build -o macos_compatibility_arm64.ext
 
       # x86
-      - name: Build x86_64 extension
+      - name: Build x86 extension
         run: |
-          GOOS=darwin GOARCH=amd64 go build -o macos_compatibility_x86_64.ext
+          GOOS=darwin GOARCH=amd64 go build -o macos_compatibility_x86.ext
 
       # universal binary with lipo
       - name: Create Universal Binary
         run: |
           mkdir -p binaries
           cp macos_compatibility_arm64.ext ./binaries/
-          cp macos_compatibility_x86_64.ext ./binaries/
-          lipo -create binaries/macos_compatibility_arm64.ext binaries/macos_compatibility_x86_64.ext -output ./binaries/macos_compatibility_universal.ext
+          cp macos_compatibility_x86.ext ./binaries/
+          lipo -create binaries/macos_compatibility_arm64.ext binaries/macos_compatibility_x86.ext -output ./binaries/macos_compatibility_universal.ext
 
       # Save all binaries as artifacts
       - name: Save extension artifacts
@@ -62,7 +62,7 @@ jobs:
           name: "macos_compatibility.ext"
           files: |
             binaries/macos_compatibility_arm64.ext
-            binaries/macos_compatibility_x86_64.ext
+            binaries/macos_compatibility_x86.ext
             binaries/macos_compatibility_universal.ext
           draft: false
           prerelease: false
