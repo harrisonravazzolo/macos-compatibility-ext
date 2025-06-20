@@ -18,7 +18,7 @@ import (
 )
 
 type SOFAData struct {
-	OSVersions []OSVersion      `json:"OSVersions"`
+	OSVersions []OSVersion `json:"OSVersions"`
 	Models     map[string]Model `json:"Models"`
 }
 
@@ -32,12 +32,12 @@ type Model struct {
 
 // MacOSCompatibilityTable implements the table plugin
 type MacOSCompatibilityTable struct {
-	cacheDir   string
-	jsonCache  string
-	etagCache  string
-	sofaURL    string
-	userAgent  string
-	httpClient *http.Client
+	cacheDir    string
+	jsonCache   string
+	etagCache   string
+	sofaURL     string
+	userAgent   string
+	httpClient  *http.Client
 }
 
 // NewMacOSCompatibilityTable creates a new instance of the table
@@ -66,7 +66,7 @@ func MacOSCompatibilityColumns() []table.ColumnDefinition {
 // MacOSCompatibilityGenerate will be called whenever the table is queried
 func MacOSCompatibilityGenerate(ctx context.Context, queryContext table.QueryContext) ([]map[string]string, error) {
 	table := NewMacOSCompatibilityTable()
-
+	
 	// Set up cache file paths
 	table.jsonCache = filepath.Join(table.cacheDir, "macos_data_feed.json")
 	table.etagCache = filepath.Join(table.cacheDir, "macos_data_feed_etag.txt")
@@ -75,13 +75,13 @@ func MacOSCompatibilityGenerate(ctx context.Context, queryContext table.QueryCon
 	systemVersion, systemOSMajor, modelIdentifier, err := table.getSystemInfo(ctx)
 	if err != nil {
 		return []map[string]string{{
-			"system_version":          "Unknown",
-			"system_os_major":         "Unknown",
-			"model_identifier":        "Unknown",
-			"latest_macos":            "Unknown",
-			"latest_compatible_macos": "Unknown",
-			"is_compatible":           "-1",
-			"status":                  fmt.Sprintf("Error getting system info: %v", err),
+			"system_version":           "Unknown",
+			"system_os_major":          "Unknown",
+			"model_identifier":         "Unknown",
+			"latest_macos":             "Unknown",
+			"latest_compatible_macos":  "Unknown",
+			"is_compatible":            "-1",
+			"status":                   fmt.Sprintf("Error getting system info: %v", err),
 		}}, nil
 	}
 
@@ -89,13 +89,13 @@ func MacOSCompatibilityGenerate(ctx context.Context, queryContext table.QueryCon
 	sofaData, err := table.fetchSofaData()
 	if err != nil {
 		return []map[string]string{{
-			"system_version":          systemVersion,
-			"system_os_major":         systemOSMajor,
-			"model_identifier":        modelIdentifier,
-			"latest_macos":            "Unknown",
-			"latest_compatible_macos": "Unknown",
-			"is_compatible":           "-1",
-			"status":                  fmt.Sprintf("Could not obtain data: %v", err),
+			"system_version":           systemVersion,
+			"system_os_major":          systemOSMajor,
+			"model_identifier":         modelIdentifier,
+			"latest_macos":             "Unknown",
+			"latest_compatible_macos":  "Unknown",
+			"is_compatible":            "-1",
+			"status":                   fmt.Sprintf("Could not obtain data: %v", err),
 		}}, nil
 	}
 
@@ -126,7 +126,7 @@ func (m *MacOSCompatibilityTable) getSystemInfo(ctx context.Context) (string, st
 
 // getSystemVersion gets the macOS version
 func (m *MacOSCompatibilityTable) getSystemVersion() (string, error) {
-	cmd := exec.Command("/usr/bin/sw_vers", "-productVersion")
+	cmd := exec.Command("sw_vers", "-productVersion")
 	output, err := cmd.Output()
 	if err != nil {
 		return "", err
@@ -203,7 +203,7 @@ func (m *MacOSCompatibilityTable) fetchSofaData() (*SOFAData, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to read cached data: %v", err)
 		}
-
+		
 		var sofaData SOFAData
 		if err := json.Unmarshal([]byte(cachedData), &sofaData); err != nil {
 			return nil, fmt.Errorf("failed to parse cached data: %v", err)
@@ -255,8 +255,8 @@ func (m *MacOSCompatibilityTable) fetchSofaData() (*SOFAData, error) {
 // processSofaData processes the SOFA data and returns a result row
 func (m *MacOSCompatibilityTable) processSofaData(sofaData *SOFAData, systemVersion, systemOSMajor, modelIdentifier string) map[string]string {
 	result := map[string]string{
-		"system_version":   systemVersion,
-		"system_os_major":  systemOSMajor,
+		"system_version":  systemVersion,
+		"system_os_major": systemOSMajor,
 		"model_identifier": modelIdentifier,
 	}
 
@@ -308,7 +308,7 @@ func (m *MacOSCompatibilityTable) processSofaData(sofaData *SOFAData, systemVers
 
 func main() {
 	var socket string
-
+	
 	// Manually parse arguments to ignore unknown flags
 	for i := 1; i < len(os.Args); i++ {
 		arg := os.Args[i]
@@ -322,12 +322,12 @@ func main() {
 		}
 		// Ignore all other flags including -timeout
 	}
-
+	
 	// If no socket is provided, try to get it from environment variable
 	if socket == "" {
 		socket = os.Getenv("OSQUERY_EXTENSION_SOCKET")
 	}
-
+	
 	if socket == "" {
 		log.Fatalf(`Usage: %s --socket SOCKET_PATH`, os.Args[0])
 	}
@@ -344,4 +344,4 @@ func main() {
 	if err := server.Run(); err != nil {
 		log.Fatalln(err)
 	}
-}
+} 
